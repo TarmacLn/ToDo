@@ -10,7 +10,16 @@ gem "puma", ">= 5.0"
 # gem "jbuilder"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
-# gem "bcrypt", "~> 3.1.7"
+gem "bcrypt", "~> 3.1.7"
+
+# Encode and decode JSON Web Tokens for API authentication [https://github.com/jwt/ruby-jwt]
+gem "jwt"
+
+# Serve the OpenAPI (Swagger) docs and Swagger UI [https://github.com/rswag/rswag]
+gem "rswag-api"
+gem "rswag-ui"
+# Needed by rswag-ui; leaves the default gems in Ruby 4.0
+gem "ostruct"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
@@ -37,4 +46,21 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # Testing framework [https://rspec.info]
+  gem "rspec-rails"
+
+  # Test data factories [https://github.com/thoughtbot/factory_bot_rails]
+  gem "factory_bot_rails"
+
+  # Generate the OpenAPI (Swagger) docs from request specs
+  gem "rswag-specs"
+end
+
+group :test do
+  # One-line matchers for validations and associations [https://github.com/thoughtbot/shoulda-matchers]
+  gem "shoulda-matchers"
+
+  # Fake data for factories [https://github.com/faker-ruby/faker]
+  gem "faker"
 end
