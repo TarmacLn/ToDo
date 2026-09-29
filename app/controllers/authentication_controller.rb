@@ -7,6 +7,12 @@ class AuthenticationController < ApplicationController
     json_response({ auth_token: auth_token })
   end
 
+  # GET /auth/logout
+  def logout
+    JwtDenylist.create!(jti: token_payload[:jti], exp: Time.zone.at(token_payload[:exp]))
+    json_response({ message: Message.logged_out })
+  end
+
   private
 
   def auth_params

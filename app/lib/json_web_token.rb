@@ -2,9 +2,11 @@ class JsonWebToken
   # Tokens are signed with the app's secret key
   HMAC_SECRET = Rails.application.secret_key_base
 
-  # Create a signed token that expires after 24 hours by default
+  # Create a signed token that expires after 24 hours by default.
+  # Each token gets a unique id (jti) so it can be revoked on logout.
   def self.encode(payload, exp = 24.hours.from_now)
     payload[:exp] = exp.to_i
+    payload[:jti] = SecureRandom.uuid
     JWT.encode(payload, HMAC_SECRET)
   end
 

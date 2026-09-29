@@ -5,7 +5,7 @@ class AuthorizeApiRequest
   end
 
   def call
-    { user: user }
+    { user: user, payload: decoded_token }
   end
 
   private
@@ -19,7 +19,9 @@ class AuthorizeApiRequest
   end
 
   def decoded_token
-    JsonWebToken.decode(http_auth_header)
+    @decoded_token ||= JsonWebToken.decode(http_auth_header).tap do |payload|
+      raise ExceptionHandler::InvalidToken, Message.revoked_token if JwtDenylist.revoked?(payload[:jti])
+    end
   end
 
   # Accepts both "Bearer <token>" and just "<token>"
