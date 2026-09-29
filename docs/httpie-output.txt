@@ -1,0 +1,291 @@
+
+
+=== 1. Sign up (201) ===
+$ http POST :3000/signup name=Ioanna email=httpie-1790686112@example.com password=password123 password_confirmation=password123
+
+HTTP/1.1 201 Created
+
+{
+    "message": "Account created successfully",
+    "auth_token": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo0LCJleHAiOjE3OTA3NzI1MTQsImp0aSI6IjIyMjE4ZDUxLTkxNGUtNDU0ZS1hZDQ3LWZkYWM3YmUyNjg0YyJ9.u6Ty1BXWwTwC3CgxspzsWX5jLu0Dzg-a2ir36FOaHqs"
+}
+
+
+=== 2. Sign up with an email that is already taken (422) ===
+$ http POST :3000/signup name=Ioanna email=httpie-1790686112@example.com password=password123
+
+HTTP/1.1 422 Unprocessable Content
+
+{
+    "message": "Validation failed: Email has already been taken"
+}
+
+
+=== 3. Log in with a wrong password (401) ===
+$ http POST :3000/auth/login email=httpie-1790686112@example.com password=wrong
+
+HTTP/1.1 401 Unauthorized
+
+{
+    "message": "Invalid credentials"
+}
+
+
+=== 4. Log in (200) ===
+$ http POST :3000/auth/login email=httpie-1790686112@example.com password=password123
+
+HTTP/1.1 200 OK
+
+{
+    "auth_token": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo0LCJleHAiOjE3OTA3NzI1MTYsImp0aSI6IjQ4ZGZkODBmLWEyMmItNDFhMi05MTAwLWZjNjhlOWE1ZGQ1ZSJ9.WlYT3ZnABP-xrRdZrtBSSXzAJ4358WEqRVvQpYWmR4s"
+}
+
+
+=== 5. List todos without a token (401) ===
+$ http GET :3000/todos
+
+HTTP/1.1 401 Unauthorized
+
+{
+    "message": "Missing token"
+}
+
+
+=== 6. Create a todo (201) ===
+$ http -A bearer -a $TOKEN POST :3000/todos title=Groceries
+
+HTTP/1.1 201 Created
+
+{
+    "id": 4,
+    "title": "Groceries",
+    "user_id": 4,
+    "created_at": "2026-09-29T12:48:36.980Z",
+    "updated_at": "2026-09-29T12:48:36.980Z"
+}
+
+
+=== 7. Create a todo without a title (422) ===
+$ http -A bearer -a $TOKEN POST :3000/todos title=
+
+HTTP/1.1 422 Unprocessable Content
+
+{
+    "message": "Validation failed: Title can't be blank"
+}
+
+
+=== 8. Create a second todo (201) ===
+$ http -A bearer -a $TOKEN POST :3000/todos title=Homework
+
+HTTP/1.1 201 Created
+
+{
+    "id": 5,
+    "title": "Homework",
+    "user_id": 4,
+    "created_at": "2026-09-29T12:48:38.054Z",
+    "updated_at": "2026-09-29T12:48:38.054Z"
+}
+
+
+=== 9. Create a todo item (201) ===
+$ http -A bearer -a $TOKEN POST :3000/todos/4/items 'name=Buy milk'
+
+HTTP/1.1 201 Created
+
+{
+    "id": 4,
+    "name": "Buy milk",
+    "done": false,
+    "todo_id": 4,
+    "created_at": "2026-09-29T12:48:38.597Z",
+    "updated_at": "2026-09-29T12:48:38.597Z"
+}
+
+
+=== 10. Create a todo item that is already done (201) ===
+$ http -A bearer -a $TOKEN POST :3000/todos/4/items 'name=Buy bread' done:=true
+
+HTTP/1.1 201 Created
+
+{
+    "id": 5,
+    "name": "Buy bread",
+    "done": true,
+    "todo_id": 4,
+    "created_at": "2026-09-29T12:48:39.134Z",
+    "updated_at": "2026-09-29T12:48:39.134Z"
+}
+
+
+=== 11. List all todos and todo items (200) ===
+$ http -A bearer -a $TOKEN GET :3000/todos
+
+HTTP/1.1 200 OK
+
+[
+    {
+        "id": 4,
+        "title": "Groceries",
+        "user_id": 4,
+        "created_at": "2026-09-29T12:48:36.980Z",
+        "updated_at": "2026-09-29T12:48:36.980Z",
+        "items": [
+            {
+                "id": 4,
+                "name": "Buy milk",
+                "done": false,
+                "todo_id": 4,
+                "created_at": "2026-09-29T12:48:38.597Z",
+                "updated_at": "2026-09-29T12:48:38.597Z"
+            },
+            {
+                "id": 5,
+                "name": "Buy bread",
+                "done": true,
+                "todo_id": 4,
+                "created_at": "2026-09-29T12:48:39.134Z",
+                "updated_at": "2026-09-29T12:48:39.134Z"
+            }
+        ]
+    },
+    {
+        "id": 5,
+        "title": "Homework",
+        "user_id": 4,
+        "created_at": "2026-09-29T12:48:38.054Z",
+        "updated_at": "2026-09-29T12:48:38.054Z",
+        "items": []
+    }
+]
+
+
+=== 12. Get a todo (200) ===
+$ http -A bearer -a $TOKEN GET :3000/todos/4
+
+HTTP/1.1 200 OK
+
+{
+    "id": 4,
+    "title": "Groceries",
+    "user_id": 4,
+    "created_at": "2026-09-29T12:48:36.980Z",
+    "updated_at": "2026-09-29T12:48:36.980Z",
+    "items": [
+        {
+            "id": 4,
+            "name": "Buy milk",
+            "done": false,
+            "todo_id": 4,
+            "created_at": "2026-09-29T12:48:38.597Z",
+            "updated_at": "2026-09-29T12:48:38.597Z"
+        },
+        {
+            "id": 5,
+            "name": "Buy bread",
+            "done": true,
+            "todo_id": 4,
+            "created_at": "2026-09-29T12:48:39.134Z",
+            "updated_at": "2026-09-29T12:48:39.134Z"
+        }
+    ]
+}
+
+
+=== 13. Update a todo (204) ===
+$ http -A bearer -a $TOKEN PUT :3000/todos/4 'title=Weekly groceries'
+
+HTTP/1.1 204 No Content
+
+
+
+=== 14. Get a todo item (200) ===
+$ http -A bearer -a $TOKEN GET :3000/todos/4/items/4
+
+HTTP/1.1 200 OK
+
+{
+    "id": 4,
+    "name": "Buy milk",
+    "done": false,
+    "todo_id": 4,
+    "created_at": "2026-09-29T12:48:38.597Z",
+    "updated_at": "2026-09-29T12:48:38.597Z"
+}
+
+
+=== 15. Update a todo item: mark it as done (204) ===
+$ http -A bearer -a $TOKEN PUT :3000/todos/4/items/4 done:=true
+
+HTTP/1.1 204 No Content
+
+
+
+=== 16. Get the todo item again to see the change (200) ===
+$ http -A bearer -a $TOKEN GET :3000/todos/4/items/4
+
+HTTP/1.1 200 OK
+
+{
+    "id": 4,
+    "name": "Buy milk",
+    "done": true,
+    "todo_id": 4,
+    "created_at": "2026-09-29T12:48:38.597Z",
+    "updated_at": "2026-09-29T12:48:42.181Z"
+}
+
+
+=== 17. Delete a todo item (204) ===
+$ http -A bearer -a $TOKEN DELETE :3000/todos/4/items/4
+
+HTTP/1.1 204 No Content
+
+
+
+=== 18. Get the deleted todo item (404) ===
+$ http -A bearer -a $TOKEN GET :3000/todos/4/items/4
+
+HTTP/1.1 404 Not Found
+
+{
+    "message": "Couldn't find Item with 'id'=\"4\" [WHERE \"items\".\"todo_id\" = $1]"
+}
+
+
+=== 19. Delete a todo and its items (204) ===
+$ http -A bearer -a $TOKEN DELETE :3000/todos/5
+
+HTTP/1.1 204 No Content
+
+
+
+=== 20. Get the deleted todo (404) ===
+$ http -A bearer -a $TOKEN GET :3000/todos/5
+
+HTTP/1.1 404 Not Found
+
+{
+    "message": "Couldn't find Todo with 'id'=\"5\" [WHERE \"todos\".\"user_id\" = $1]"
+}
+
+
+=== 21. Log out (200) ===
+$ http -A bearer -a $TOKEN GET :3000/auth/logout
+
+HTTP/1.1 200 OK
+
+{
+    "message": "Logged out successfully"
+}
+
+
+=== 22. Use the token after logging out (401) ===
+$ http -A bearer -a $TOKEN GET :3000/todos
+
+HTTP/1.1 401 Unauthorized
+
+{
+    "message": "Token has been revoked"
+}
