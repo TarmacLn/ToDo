@@ -1,0 +1,609 @@
+---
+openapi: 3.0.1
+info:
+  title: Todos API V1
+  version: v1
+  description: |
+    REST API for todo lists and their items, with JWT authentication.
+
+    **How to use it**
+    1. Create an account with `POST /signup`, or log in with `POST /auth/login`.
+    2. Copy the `auth_token` from the response.
+    3. Click **Authorize** and paste the token. Every other endpoint needs it.
+    4. `GET /auth/logout` revokes the token, so it can no longer be used.
+
+    Tokens expire after 24 hours. Each user only sees their own todos;
+    another user's todo returns 404.
+servers:
+- url: http://localhost:3000
+tags:
+- name: Authentication
+  description: Sign up, log in and log out
+- name: Todos
+  description: Todo lists of the logged-in user
+- name: Items
+  description: Items inside a todo list
+security:
+- bearer_auth: []
+paths:
+  "/signup":
+    post:
+      summary: Sign up
+      tags:
+      - Authentication
+      description: Creates a new account and returns a token, so the user is logged
+        in right away.
+      security: []
+      parameters: []
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              example:
+                message: Account created successfully
+                auth_token: eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjozLCJleHAiOjE3OTA3NzIwMzAsImp0aSI6Ijk5ZmNhNzRhLTlhZWMtNGNhMC04YzgyLTE4ZjU4YTFhYThjMyJ9.9KQMQUzr_yOHODe_5vzIO3RRf5o_U8y_ihOp4OWGyqs
+              schema:
+                "$ref": "#/components/schemas/signup_response"
+        '422':
+          description: Missing or invalid data, or the email is already taken
+          content:
+            application/json:
+              example:
+                message: 'Validation failed: Password can''t be blank, Name can''t
+                  be blank'
+              schema:
+                "$ref": "#/components/schemas/error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Ioanna
+                email:
+                  type: string
+                  format: email
+                  example: ioanna@example.com
+                password:
+                  type: string
+                  format: password
+                  example: password123
+                password_confirmation:
+                  type: string
+                  format: password
+                  example: password123
+              required:
+              - name
+              - email
+              - password
+  "/auth/login":
+    post:
+      summary: Log in
+      tags:
+      - Authentication
+      description: Checks the email and password and returns a token that is valid
+        for 24 hours.
+      security: []
+      parameters: []
+      responses:
+        '200':
+          description: Logged in
+          content:
+            application/json:
+              example:
+                auth_token: eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo0LCJleHAiOjE3OTA3NzIwMzEsImp0aSI6Ijk4MmU2NzAyLTM2NmMtNDkxNy1hNGMwLTA0MjcwODI5MWQ0NiJ9.K67bQxcUU0_70fXD-y0ActHUjfBsA8vMjZlz1vdcM2U
+              schema:
+                "$ref": "#/components/schemas/auth_token"
+        '401':
+          description: Wrong email or password
+          content:
+            application/json:
+              example:
+                message: Invalid credentials
+              schema:
+                "$ref": "#/components/schemas/error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: ioanna@example.com
+                password:
+                  type: string
+                  format: password
+                  example: password123
+              required:
+              - email
+              - password
+  "/auth/logout":
+    get:
+      summary: Log out
+      tags:
+      - Authentication
+      description: Revokes the token used for this request. After logging out, that
+        token returns 401.
+      responses:
+        '200':
+          description: Logged out
+          content:
+            application/json:
+              example:
+                message: Logged out successfully
+              schema:
+                "$ref": "#/components/schemas/message"
+        '401':
+          description: Missing, invalid, expired or already revoked token
+          content:
+            application/json:
+              example:
+                message: Not enough or too many segments
+              schema:
+                "$ref": "#/components/schemas/error"
+  "/todos":
+    get:
+      summary: List all todos and their items
+      tags:
+      - Todos
+      description: Returns the logged-in user's todos. Each todo includes its items.
+      responses:
+        '200':
+          description: Todos found
+          content:
+            application/json:
+              example:
+              - id: 2
+                title: Groceries
+                user_id: 7
+                created_at: '2026-09-29T12:40:31.187Z'
+                updated_at: '2026-09-29T12:40:31.187Z'
+                items:
+                - id: 2
+                  name: Buy milk
+                  done: false
+                  todo_id: 2
+                  created_at: '2026-09-29T12:40:31.194Z'
+                  updated_at: '2026-09-29T12:40:31.194Z'
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/todo_with_items"
+        '401':
+          description: Missing or invalid token
+          content:
+            application/json:
+              example:
+                message: Not enough or too many segments
+              schema:
+                "$ref": "#/components/schemas/error"
+    post:
+      summary: Create a todo
+      tags:
+      - Todos
+      parameters: []
+      responses:
+        '201':
+          description: Todo created
+          content:
+            application/json:
+              example:
+                id: 3
+                title: Groceries
+                user_id: 8
+                created_at: '2026-09-29T12:40:31.217Z'
+                updated_at: '2026-09-29T12:40:31.217Z'
+              schema:
+                "$ref": "#/components/schemas/todo"
+        '422':
+          description: Title is missing
+          content:
+            application/json:
+              example:
+                message: 'Validation failed: Title can''t be blank'
+              schema:
+                "$ref": "#/components/schemas/error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: Groceries
+              required:
+              - title
+  "/todos/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: Todo id
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Get a todo
+      tags:
+      - Todos
+      description: Returns one todo with its items.
+      responses:
+        '200':
+          description: Todo found
+          content:
+            application/json:
+              example:
+                id: 4
+                title: Groceries
+                user_id: 10
+                created_at: '2026-09-29T12:40:31.231Z'
+                updated_at: '2026-09-29T12:40:31.231Z'
+                items:
+                - id: 3
+                  name: Buy milk
+                  done: false
+                  todo_id: 4
+                  created_at: '2026-09-29T12:40:31.232Z'
+                  updated_at: '2026-09-29T12:40:31.232Z'
+              schema:
+                "$ref": "#/components/schemas/todo_with_items"
+        '404':
+          description: Todo not found, or it belongs to another user
+          content:
+            application/json:
+              example:
+                message: Couldn't find Todo with 'id'="0" [WHERE "todos"."user_id"
+                  = $1]
+              schema:
+                "$ref": "#/components/schemas/error"
+    put:
+      summary: Update a todo
+      tags:
+      - Todos
+      parameters: []
+      responses:
+        '204':
+          description: Todo updated
+        '422':
+          description: Title is blank
+          content:
+            application/json:
+              example:
+                message: 'Validation failed: Title can''t be blank'
+        '404':
+          description: Todo not found
+          content:
+            application/json:
+              example:
+                message: Couldn't find Todo with 'id'="0" [WHERE "todos"."user_id"
+                  = $1]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: Groceries
+              required:
+              - title
+    delete:
+      summary: Delete a todo and its items
+      tags:
+      - Todos
+      responses:
+        '204':
+          description: Todo and its items deleted
+        '404':
+          description: Todo not found
+          content:
+            application/json:
+              example:
+                message: Couldn't find Todo with 'id'="0" [WHERE "todos"."user_id"
+                  = $1]
+  "/todos/{todo_id}/items":
+    parameters:
+    - name: todo_id
+      in: path
+      description: Todo id
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: List the items of a todo
+      tags:
+      - Items
+      responses:
+        '200':
+          description: Items found
+          content:
+            application/json:
+              example:
+              - id: 4
+                name: Buy milk
+                done: false
+                todo_id: 8
+                created_at: '2026-09-29T12:40:31.292Z'
+                updated_at: '2026-09-29T12:40:31.292Z'
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/item"
+        '404':
+          description: Todo not found
+          content:
+            application/json:
+              example:
+                message: Couldn't find Todo with 'id'="0" [WHERE "todos"."user_id"
+                  = $1]
+              schema:
+                "$ref": "#/components/schemas/error"
+    post:
+      summary: Create a todo item
+      tags:
+      - Items
+      description: New items start with done = false.
+      parameters: []
+      responses:
+        '201':
+          description: Item created
+          content:
+            application/json:
+              example:
+                id: 5
+                name: Buy milk
+                done: false
+                todo_id: 9
+                created_at: '2026-09-29T12:40:31.312Z'
+                updated_at: '2026-09-29T12:40:31.312Z'
+              schema:
+                "$ref": "#/components/schemas/item"
+        '422':
+          description: Name is missing
+          content:
+            application/json:
+              example:
+                message: 'Validation failed: Name can''t be blank'
+              schema:
+                "$ref": "#/components/schemas/error"
+        '404':
+          description: Todo not found
+          content:
+            application/json:
+              example:
+                message: Couldn't find Todo with 'id'="0" [WHERE "todos"."user_id"
+                  = $1]
+              schema:
+                "$ref": "#/components/schemas/error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Buy milk
+                done:
+                  type: boolean
+                  example: false
+              required:
+              - name
+  "/todos/{todo_id}/items/{id}":
+    parameters:
+    - name: todo_id
+      in: path
+      description: Todo id
+      required: true
+      schema:
+        type: integer
+    - name: id
+      in: path
+      description: Item id
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Get a todo item
+      tags:
+      - Items
+      responses:
+        '200':
+          description: Item found
+          content:
+            application/json:
+              example:
+                id: 6
+                name: Buy milk
+                done: false
+                todo_id: 11
+                created_at: '2026-09-29T12:40:31.335Z'
+                updated_at: '2026-09-29T12:40:31.335Z'
+              schema:
+                "$ref": "#/components/schemas/item"
+        '404':
+          description: Item not found in this todo
+          content:
+            application/json:
+              example:
+                message: Couldn't find Item with 'id'="0" [WHERE "items"."todo_id"
+                  = $1]
+              schema:
+                "$ref": "#/components/schemas/error"
+    put:
+      summary: Update a todo item
+      tags:
+      - Items
+      description: Change the name and/or mark the item as done.
+      parameters: []
+      responses:
+        '204':
+          description: Item updated
+        '422':
+          description: Name is blank
+          content:
+            application/json:
+              example:
+                message: 'Validation failed: Name can''t be blank'
+        '404':
+          description: Item not found in this todo
+          content:
+            application/json:
+              example:
+                message: Couldn't find Item with 'id'="0" [WHERE "items"."todo_id"
+                  = $1]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Buy oat milk
+                done:
+                  type: boolean
+                  example: true
+    delete:
+      summary: Delete a todo item
+      tags:
+      - Items
+      responses:
+        '204':
+          description: Item deleted
+        '404':
+          description: Item not found in this todo
+          content:
+            application/json:
+              example:
+                message: Couldn't find Item with 'id'="0" [WHERE "items"."todo_id"
+                  = $1]
+components:
+  securitySchemes:
+    bearer_auth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Couldn't find Todo with 'id'=0
+      required:
+      - message
+    message:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+      - message
+    auth_token:
+      type: object
+      properties:
+        auth_token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiJ9...
+      required:
+      - auth_token
+    signup_response:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Account created successfully
+        auth_token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiJ9...
+      required:
+      - message
+      - auth_token
+    item:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Buy milk
+        done:
+          type: boolean
+          example: false
+        todo_id:
+          type: integer
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - name
+      - done
+      - todo_id
+      - created_at
+      - updated_at
+    todo:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Groceries
+        user_id:
+          type: integer
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - title
+      - user_id
+      - created_at
+      - updated_at
+    todo_with_items:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Groceries
+        user_id:
+          type: integer
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            "$ref": "#/components/schemas/item"
+      required:
+      - id
+      - title
+      - user_id
+      - created_at
+      - updated_at
+      - items
