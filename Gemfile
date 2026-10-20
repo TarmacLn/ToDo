@@ -58,7 +58,7 @@ group :development, :test do
 
   # json 3.0 breaks json-schema 6.2 (used by rswag-specs to check responses).
   # Remove this line once json-schema supports json 3.
-  gem "json", "< 3"
+  gem "json", "< 4"
 end
 
 group :test do
